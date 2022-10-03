@@ -1,0 +1,20 @@
+{
+    "name": "dezull/unarchiver",
+    "description": "Extract archives using libarchive tools and unrar",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Dezull\\Unarchiver\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Dzul Nizam Bin Mahmud Pauzi",
+            "email": "dezull@gmail.com"
+        }
+    ],
+    "require": {
+        "symfony/process": "^6.1"
+    }
+}
