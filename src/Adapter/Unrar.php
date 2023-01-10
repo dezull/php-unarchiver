@@ -6,6 +6,7 @@ use Dezull\Unarchiver\Entry\Entry;
 use Dezull\Unarchiver\Entry\EntryInterface;
 use Dezull\Unarchiver\Exception\EncryptionPasswordRequiredException;
 use Dezull\Unarchiver\Exception\EntryNotFoundException;
+use Dezull\Unarchiver\Process\Process;
 use Dezull\Unarchiver\Utils;
 use Generator;
 
@@ -178,10 +179,11 @@ class Unrar implements AdapterInterface
         }
     }
 
-    protected function checkAndInputPassword($process, $buffer): void
+    protected function checkAndInputPassword(Process $process, $buffer): void
     {
         if (preg_match('/^Enter password.+: /m', $buffer) === 1) {
             if ($this->password === null) {
+                $process->end();
                 throw new EncryptionPasswordRequiredException();
             }
 
