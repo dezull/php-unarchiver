@@ -6,19 +6,30 @@ use Dezull\Unarchiver\Exception\ExecutableNotFoundException;
 use Dezull\Unarchiver\Process\Process;
 use RuntimeException;
 
-trait ExecutableTrait
+abstract class ExecutableAdapter implements AdapterInterface
 {
     private ?string $executable = null;
 
+    private ?int $timeout = null;
+
     public function createProcess(string ...$args): Process
     {
-        return new Process($this->getExecutable(), ...$args);
+        return (new Process($this->getExecutable(), $this->timeout, ...$args));
     }
 
     /** Set executable from any of the files */
-    public function setExecutable(...$files): void
+    public function setExecutable(...$files): static
     {
         $this->executable = $this->ensureAnyExecutable($files);
+
+        return $this;
+    }
+
+    public function setTimeout(?int $seconds): static
+    {
+        $this->timeout = $seconds;
+
+        return $this;
     }
 
     private function ensureAnyExecutable(array $files): ?string

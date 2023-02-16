@@ -14,16 +14,16 @@ class Process
     private bool $started = false;
     private bool $ended = false;
 
-    public function __construct($executable, ...$args)
+    public function __construct(string $executable, ?int $timeout = null, string ...$args)
     {
         $this->input = new InputStream();
         $this->process = new SymfonyProcess(array($executable, ...$args));
         $this->process->setInput($this->input);
-        $this->process->setTimeout(null);
+        $this->process->setTimeout($timeout);
         $this->process->setIdleTimeout(3600);
     }
 
-    public function start(): self
+    public function start(): static
     {
         if ($this->started) throw new RuntimeException('Process already started');
         $this->process->start();
@@ -32,7 +32,7 @@ class Process
         return $this;
     }
 
-    public function end(): self
+    public function end(): static
     {
         if (! $this->started) throw new RuntimeException('Process not yet started');
         $this->input->close();

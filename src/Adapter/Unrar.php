@@ -10,10 +10,8 @@ use Dezull\Unarchiver\Process\Process;
 use Dezull\Unarchiver\Utils;
 use Generator;
 
-class Unrar implements AdapterInterface
+class Unrar extends ExecutableAdapter
 {
-    use ExecutableTrait;
-
     protected string $filename;
     /** @var string */
     protected $password;

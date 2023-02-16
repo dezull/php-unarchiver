@@ -64,4 +64,11 @@ class Unarchiver
     public function extract($outputDirectory, $filenames = null, $overwrite = true): int {
         return $this->adapter->extract($outputDirectory, $filenames, $overwrite);
     }
+
+    public function setTimeout(?int $seconds = null): static
+    {
+        $this->adapter->setTimeout($seconds);
+
+        return $this;
+    }
 }

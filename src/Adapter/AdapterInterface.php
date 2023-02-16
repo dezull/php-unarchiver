@@ -11,4 +11,5 @@ interface AdapterInterface
     public function getEntry(string $filename): EntryInterface;
     public function extract(
         string $outputDirectory, ?array $filenames = null, bool $overwrite = true): int;
+    public function setTimeout(?int $seconds): static;
 }

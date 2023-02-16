@@ -10,10 +10,8 @@ use Dezull\Unarchiver\Utils;
 use Generator;
 use Symfony\Component\Process\Process;
 
-class Bsdtar implements AdapterInterface
+class Bsdtar extends ExecutableAdapter
 {
-    use ExecutableTrait;
-
     protected string $filename;
     /** @var string */
     protected $password;
