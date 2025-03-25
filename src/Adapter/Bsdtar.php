@@ -70,7 +70,7 @@ class Bsdtar extends ExecutableAdapter
             '--passphrase',
             $this->password ?? ' ',
         ];
-        if ($overwrite) $args[] = '--keep-old-files';
+        if (! $overwrite) $args[] = '--keep-old-files';
         if ($filenames !== null) $args = array_merge($args, $filenames);
         if (! file_exists($outputDirectory)) mkdir($outputDirectory);
 
