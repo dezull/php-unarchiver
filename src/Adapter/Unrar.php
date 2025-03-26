@@ -66,7 +66,8 @@ class Unrar extends ExecutableAdapter
         string $outputDirectory, ?array $filenames, bool $overwrite): int
     {
         $overwriteArg = $overwrite ? "-o+" : "-o-";
-        $args = ['x', '-y', '-@', $overwriteArg, $this->filename];
+        $passwordArg = '-p'.($this->password ?? '0');
+        $args = ['x', '-y', $passwordArg, '-@', $overwriteArg, $this->filename];
         if ($filenames !== null) $args = array_merge($args, $filenames);
         $args[] = $outputDirectory . DIRECTORY_SEPARATOR;
 
@@ -74,7 +75,7 @@ class Unrar extends ExecutableAdapter
         $extractAndCount = 0;
 
         foreach ($process->start()->getIterator() as $buffer) {
-            $this->checkAndInputPassword($process, $buffer);
+            $this->ensurePassword($buffer);
 
             $extractAndCount += $this->countExtractedFromBuffer($buffer);
         }
@@ -113,12 +114,13 @@ class Unrar extends ExecutableAdapter
      */
     protected function getParsedEntries(?string $filename = null): Generator
     {
-        $args = ["vta", $this->filename];
+        $passwordArg = '-p'.($this->password ?? '0');
+        $args = ["vta", $passwordArg, $this->filename];
         if ($filename) $args[] = $filename;
 
         $process = $this->createProcess(...$args);
         foreach ($process->start()->getIterator() as $buffer) {
-            $this->checkAndInputPassword($process, $buffer);
+            $this->ensurePassword($buffer);
             foreach ($this->parseEntriesFromBuffer($buffer) as $entry) {
                 yield $entry;
             }
@@ -177,15 +179,10 @@ class Unrar extends ExecutableAdapter
         }
     }
 
-    protected function checkAndInputPassword(Process $process, $buffer): void
+    protected function ensurePassword($buffer): void
     {
-        if (preg_match('/^Enter password.+: /m', $buffer) === 1) {
-            if ($this->password === null) {
-                $process->end();
-                throw new EncryptionPasswordRequiredException();
-            }
-
-            $process->write($this->password . PHP_EOL);
+        if (preg_match('/^Incorrect password/m', $buffer) === 1) {
+            throw new EncryptionPasswordRequiredException();
         }
     }
 }
