@@ -4,6 +4,7 @@ namespace Dezull\Unarchiver\Adapter;
 
 use Dezull\Unarchiver\Exception\ExecutableNotFoundException;
 use Dezull\Unarchiver\Process\Process;
+use Override;
 use RuntimeException;
 
 abstract class ExecutableAdapter implements AdapterInterface
@@ -12,9 +13,19 @@ abstract class ExecutableAdapter implements AdapterInterface
 
     private ?int $timeout = null;
 
+    private ?Process $process = null;
+
+    #[Override]
+    public function cleanUp(): void
+    {
+        if (isset($this->process)) {
+            $this->process->end();
+        }
+    }
+
     public function createProcess(string ...$args): Process
     {
-        return (new Process($this->getExecutable(), $this->timeout, ...$args));
+        return $this->process = (new Process($this->getExecutable(), $this->timeout, ...$args));
     }
 
     /** Set executable from any of the files */

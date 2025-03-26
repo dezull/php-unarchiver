@@ -4,6 +4,7 @@ namespace Dezull\Unarchiver;
 
 use Dezull\Unarchiver\Adapter\AdapterInterface;
 use Dezull\Unarchiver\Entry\EntryInterface;
+use Exception;
 use Generator;
 
 class Unarchiver
@@ -62,7 +63,13 @@ class Unarchiver
      *       if $filenames are specified.
      */
     public function extract($outputDirectory, $filenames = null, $overwrite = true): int {
-        return $this->adapter->extract($outputDirectory, $filenames, $overwrite);
+        try {
+            return $this->adapter->extract($outputDirectory, $filenames, $overwrite);
+        } catch (Exception $e) {
+            $this->adapter->cleanUp();
+
+            throw $e;
+        }
     }
 
     public function setTimeout(?int $seconds = null): static

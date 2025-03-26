@@ -12,4 +12,5 @@ interface AdapterInterface
     public function extract(
         string $outputDirectory, ?array $filenames = null, bool $overwrite = true): int;
     public function setTimeout(?int $seconds): static;
+    public function cleanUp(): void;
 }
