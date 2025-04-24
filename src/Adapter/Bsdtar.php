@@ -6,6 +6,7 @@ use Dezull\Unarchiver\Entry\Entry;
 use Dezull\Unarchiver\Entry\EntryInterface;
 use Dezull\Unarchiver\Exception\EncryptionPasswordRequiredException;
 use Dezull\Unarchiver\Exception\EntryNotFoundException;
+use Dezull\Unarchiver\Process\LineBuffer;
 use Dezull\Unarchiver\Utils;
 use Generator;
 use Symfony\Component\Process\Process;
@@ -16,8 +17,7 @@ class Bsdtar extends ExecutableAdapter
     /** @var string */
     protected $password;
 
-    /** @var array */
-    private $parseBuffer;
+    private LineBuffer $lineBuffer;
 
     public function __construct($filename, $password) {
         $this->filename = $filename;
@@ -87,7 +87,7 @@ class Bsdtar extends ExecutableAdapter
         return $extractAndCount;
     }
 
-    protected function countExtractedFromBuffer(string &$buffer): int
+    protected function countExtractedFromBuffer(string $buffer): int
     {
         $lines = Utils::splitLines($buffer);
         $extractCount = 0;
@@ -112,6 +112,7 @@ class Bsdtar extends ExecutableAdapter
         $args = ["-vvtf", $this->filename];
         if ($filename) $args[] = $filename;
 
+        $this->lineBuffer = new LineBuffer;
         $process = $this->createProcess(...$args);
         foreach ($process->start()->getIterator() as $fd => $buffer) {
             if ($fd === Process::ERR) $this->ensurePassword($buffer);
@@ -126,22 +127,19 @@ class Bsdtar extends ExecutableAdapter
     /**
      * @return Generator<Entry>
      */
-    protected function parseEntriesFromBuffer(string &$buffer): Generator
+    protected function parseEntriesFromBuffer(string $buffer): Generator
     {
-        $lines = array_merge(($this->parseBuffer ?? []), Utils::splitLines($buffer));
+        $lines = $this->lineBuffer->merge($buffer);
 
         while (($line = array_shift($lines)) !== null) {
             yield from $this->parseEntryFromLine($line);
         }
-
-        // We might have incomplete buffer to parse a complete entry here
-        $this->parseBuffer = $lines;
     }
 
     /**
      * @return Generator<Entry>
      */
-    protected function parseEntryFromLine(&$line): Generator
+    protected function parseEntryFromLine($line): Generator
     {
         // Adapted from https://github.com/alchemy-fr/Zippy/blob/master/src/Parser/BSDTarOutputParser.php
         // -rw-r--r--  0 0      0           7 Sep 29 11:27 test.txt

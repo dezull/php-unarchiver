@@ -6,6 +6,7 @@ use Dezull\Unarchiver\Entry\Entry;
 use Dezull\Unarchiver\Entry\EntryInterface;
 use Dezull\Unarchiver\Exception\EncryptionPasswordRequiredException;
 use Dezull\Unarchiver\Exception\EntryNotFoundException;
+use Dezull\Unarchiver\Process\LineBuffer;
 use Dezull\Unarchiver\Process\Process;
 use Dezull\Unarchiver\Utils;
 use Generator;
@@ -16,8 +17,8 @@ class Unrar extends ExecutableAdapter
     /** @var string */
     protected $password;
 
-    /** @var array */
-    private $parseBuffer;
+    private LineBuffer $lineBuffer;
+
     /** @var EntryInterface */
     private $currentEntry;
 
@@ -118,6 +119,7 @@ class Unrar extends ExecutableAdapter
         $args = ["vta", $passwordArg, $this->filename];
         if ($filename) $args[] = $filename;
 
+        $this->lineBuffer = new LineBuffer;
         $process = $this->createProcess(...$args);
         foreach ($process->start()->getIterator() as $buffer) {
             $this->ensurePassword($buffer);
@@ -132,22 +134,19 @@ class Unrar extends ExecutableAdapter
     /**
      * @return Generator<Entry>
      */
-    protected function parseEntriesFromBuffer(string &$buffer): Generator
+    protected function parseEntriesFromBuffer(string $buffer): Generator
     {
-        $lines = array_merge(($this->parseBuffer ?? []), Utils::splitLines($buffer));
+        $lines = $this->lineBuffer->merge($buffer);
 
         while (($line = array_shift($lines)) !== null) {
             yield from $this->parseEntryFromLine($line);
         }
-
-        // We might have incomplete buffer to parse a complete entry here
-        $this->parseBuffer = $lines;
     }
 
     /**
      * @return Generator<Entry>
      */
-    protected function parseEntryFromLine(&$line): Generator
+    protected function parseEntryFromLine($line): Generator
     {
         if (preg_match('/^\s*Name: (?P<name>.+)$/', $line, $matches) === 1) {
             $this->currentEntry = new Entry($this);
@@ -174,6 +173,7 @@ class Unrar extends ExecutableAdapter
                 $this->currentEntry->setCrc($matches["crc"]);
             } else if (preg_match('/^\s*Compression: RAR.+$/', $line, $matches) === 1) {
                 yield $this->currentEntry;
+
                 $this->currentEntry = null;
             }
         }
