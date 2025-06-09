@@ -4,4 +4,4 @@ namespace Dezull\Unarchiver\Exception;
 
 use RuntimeException;
 
-class EntryNotFoundException extends RuntimeException {}
+class TimeoutException extends RuntimeException {}

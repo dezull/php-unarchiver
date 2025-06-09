@@ -5,23 +5,16 @@ namespace Dezull\Unarchiver\Adapter;
 use Dezull\Unarchiver\Entry\Entry;
 use Dezull\Unarchiver\Entry\EntryInterface;
 use Dezull\Unarchiver\Exception\EncryptionPasswordRequiredException;
-use Dezull\Unarchiver\Exception\EntryNotFoundException;
-use Dezull\Unarchiver\Process\LineBuffer;
-use Dezull\Unarchiver\Utils;
+use Dezull\Unarchiver\Process\LineBufferedOutput;
+use Dezull\Unarchiver\Process\Process;
 use Generator;
-use Symfony\Component\Process\Process;
+use Iterator;
+use Override;
 
 class Bsdtar extends ExecutableAdapter
 {
-    protected string $filename;
-    /** @var string */
-    protected $password;
-
-    private LineBuffer $lineBuffer;
-
-    public function __construct($filename, $password) {
-        $this->filename = $filename;
-        $this->password = $password;
+    public function __construct(protected string $filename, protected ?string $password = null)
+    {
         $this->setExecutable(
             '/opt/homebrew/opt/libarchive/bin/bsdtar',
             '/usr/local/bin/bsdtar',
@@ -29,32 +22,34 @@ class Bsdtar extends ExecutableAdapter
         );
     }
 
-    public function getEntries(): Generator
+    #[Override]
+    public function getEntries(): Iterator
     {
         yield from $this->getParsedEntries();
     }
 
-    public function getEntry($filename): EntryInterface
+    #[Override]
+    public function getEntry(string $filename): ?EntryInterface
     {
-        if (! $this->hasEntry($filename)) throw new EntryNotFoundException();
-
-        foreach ($this->getParsedEntries($filename) as $entry) {
-            return $entry;
-        }
+        return $this->hasEntry($filename)
+            ? $this->getParsedEntries($filename)->current()
+            : null;
     }
 
+    #[Override]
     public function extract(
         string $outputDirectory, ?array $filenames = null, bool $overwrite = true): int
     {
         return $this->extractAndCount($outputDirectory, $filenames, $overwrite);
     }
 
-    protected function hasEntry(string $filename): bool {
+    protected function hasEntry(string $filename): bool
+    {
         // This can take some time on a large archive file
         return $this->createProcess('-tf', $this->filename, $filename)
-                    ->start()
-                    ->end()
-                    ->isSuccessful();
+            ->start()
+            ->end()
+            ->isSuccessful();
     }
 
     protected function extractAndCount(
@@ -68,28 +63,39 @@ class Bsdtar extends ExecutableAdapter
 
             // Passphrase can't be empty (space is fine), and ignored if not encrypted
             '--passphrase',
-            $this->password ?? ' ',
+            empty($this->password) ? ' ' : $this->password,
         ];
-        if (! $overwrite) $args[] = '--keep-old-files';
-        if ($filenames !== null) $args = array_merge($args, $filenames);
-        if (! file_exists($outputDirectory)) mkdir($outputDirectory);
+
+        if (! $overwrite) {
+            $args[] = '--keep-old-files';
+        }
+        if ($filenames !== null) {
+            $args = [...$args, ...$filenames];
+        }
+        if (! file_exists($outputDirectory)) {
+            mkdir($outputDirectory);
+        }
 
         $process = $this->createProcess(...$args);
-        $extractAndCount = 0;
+        $buffer = $this->createBuffer($process->start());
+        $extractedCount = 0;
 
-        foreach ($process->start()->getIterator() as $fd => $buffer) {
-            if ($fd === Process::ERR) $this->ensurePassword($buffer);
-            $extractAndCount += $this->countExtractedFromBuffer($buffer);
+        foreach ($buffer as $line) {
+            if ($this->matchExtracted($line)) {
+                $extractedCount++;
+            }
         }
 
         $process->end();
 
-        return $extractAndCount;
+        return $extractedCount;
     }
 
-    protected function countExtractedFromBuffer(string $buffer): int
+    /**
+     * @param  string[]  $lines
+     */
+    protected function countExtractedFromBuffer(array $lines = []): int
     {
-        $lines = Utils::splitLines($buffer);
         $extractCount = 0;
 
         // ...
@@ -98,10 +104,27 @@ class Bsdtar extends ExecutableAdapter
         // x -rw-r--r--  0 0      0           5 Apr  3  2021 two.txt.
         // ...
         while (($line = array_shift($lines)) !== null) {
-            if (preg_match('/^x.+$/', $line) === 1) $extractCount++;
+            if (preg_match('/^x.+$/', $line) === 1) {
+                $extractCount++;
+            }
         }
 
         return $extractCount;
+    }
+
+    protected function matchExtracted(string $line): bool
+    {
+        return preg_match('/^x.+$/', $line) === 1;
+    }
+
+    protected function createBuffer(Process $process): LineBufferedOutput
+    {
+        return (new LineBufferedOutput($process))
+            ->beforeBuffer(function ($output, $fd) {
+                if ($fd === Process::ERR) {
+                    $this->ensurePassword($output);
+                }
+            });
     }
 
     /**
@@ -109,14 +132,16 @@ class Bsdtar extends ExecutableAdapter
      */
     protected function getParsedEntries(?string $filename = null): Generator
     {
-        $args = ["-vvtf", $this->filename];
-        if ($filename) $args[] = $filename;
+        $args = ['-vvtf', $this->filename];
+        if ($filename) {
+            $args[] = $filename;
+        }
 
-        $this->lineBuffer = new LineBuffer;
         $process = $this->createProcess(...$args);
-        foreach ($process->start()->getIterator() as $fd => $buffer) {
-            if ($fd === Process::ERR) $this->ensurePassword($buffer);
-            foreach ($this->parseEntriesFromBuffer($buffer) as $entry) {
+        $buffer = $this->createBuffer($process->start());
+
+        foreach ($buffer as $line) {
+            if ($entry = $this->parseEntryFromLine($line)) {
                 yield $entry;
             }
         }
@@ -125,21 +150,19 @@ class Bsdtar extends ExecutableAdapter
     }
 
     /**
+     * @param  string[]  $lines
      * @return Generator<Entry>
      */
-    protected function parseEntriesFromBuffer(string $buffer): Generator
+    protected function parseEntriesFromBuffer(array $lines = []): Generator
     {
-        $lines = $this->lineBuffer->merge($buffer);
-
         while (($line = array_shift($lines)) !== null) {
-            yield from $this->parseEntryFromLine($line);
+            if ($entry = $this->parseEntryFromLine($line)) {
+                yield $entry;
+            }
         }
     }
 
-    /**
-     * @return Generator<Entry>
-     */
-    protected function parseEntryFromLine($line): Generator
+    protected function parseEntryFromLine(string $line): ?Entry
     {
         // Adapted from https://github.com/alchemy-fr/Zippy/blob/master/src/Parser/BSDTarOutputParser.php
         // -rw-r--r--  0 0      0           7 Sep 29 11:27 test.txt
@@ -164,23 +187,25 @@ class Bsdtar extends ExecutableAdapter
             /x
             RE;
 
-        if (preg_match($re, $line, $matches) !== 1) return;
+        if (preg_match($re, $line, $matches) !== 1) {
+            return null;
+        }
 
         $entry = new Entry($this);
-        $entry->setPath($matches['name']);
-        $entry->setSize($matches['size']);
+        $entry->setPath(rtrim($matches['name'], '/'));
+        $entry->setSize(intval($matches['size']));
         $entry->setDirectory($matches['type'] === 'd');
         if (($time = strtotime($matches['time'])) !== false) {
             $entry->setModificationTime($time);
         }
 
-        yield $entry;
+        return $entry;
     }
 
-    protected function ensurePassword($buffer): void
+    protected function ensurePassword(string $buffer): void
     {
         if (str_contains($buffer, 'Incorrect passphrase:')) {
-            throw new EncryptionPasswordRequiredException();
+            throw new EncryptionPasswordRequiredException;
         }
     }
 }

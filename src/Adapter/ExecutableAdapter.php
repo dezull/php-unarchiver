@@ -16,6 +16,14 @@ abstract class ExecutableAdapter implements AdapterInterface
     private ?Process $process = null;
 
     #[Override]
+    public function setTimeout(int $seconds): static
+    {
+        $this->timeout = $seconds;
+
+        return $this;
+    }
+
+    #[Override]
     public function cleanUp(): void
     {
         if (isset($this->process)) {
@@ -23,39 +31,41 @@ abstract class ExecutableAdapter implements AdapterInterface
         }
     }
 
-    public function createProcess(string ...$args): Process
+    /**
+     * Set executable from any of the files
+     */
+    protected function setExecutable(string ...$paths): static
+    {
+        $this->executable = $this->ensureAnyExecutable($paths);
+
+        return $this;
+    }
+
+    protected function createProcess(string ...$args): Process
     {
         return $this->process = (new Process($this->getExecutable(), $this->timeout, ...$args));
     }
 
-    /** Set executable from any of the files */
-    public function setExecutable(...$files): static
+    /**
+     * @param  string[]  $paths
+     */
+    private function ensureAnyExecutable(array $paths): string
     {
-        $this->executable = $this->ensureAnyExecutable($files);
-
-        return $this;
-    }
-
-    public function setTimeout(?int $seconds): static
-    {
-        $this->timeout = $seconds;
-
-        return $this;
-    }
-
-    private function ensureAnyExecutable(array $files): ?string
-    {
-        foreach ($files as $file) {
-            if (file_exists($file) && is_file($file)) return $file;
+        foreach ($paths as $path) {
+            if (file_exists($path) && is_file($path)) {
+                return $path;
+            }
         }
 
-        throw new ExecutableNotFoundException($files);
+        throw new ExecutableNotFoundException($paths);
     }
 
     private function getExecutable(): string
     {
-        if ($this->executable !== null) return $this->executable;
-        
+        if (isset($this->executable)) {
+            return $this->executable;
+        }
+
         throw new RuntimeException('$executable property not set');
     }
 }

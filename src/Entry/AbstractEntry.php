@@ -3,20 +3,18 @@
 namespace Dezull\Unarchiver\Entry;
 
 use Dezull\Unarchiver\Adapter\AdapterInterface;
+use Override;
 
 abstract class AbstractEntry implements EntryInterface
 {
-    protected AdapterInterface $adapter;
+    public function __construct(protected AdapterInterface $adapter) {}
 
-    public function __construct(AdapterInterface $adapter)
-    {
-        $this->adapter = $adapter;
-    }
-
-    public function extract($outputDirectory = null, $overwrite = true): void
+    #[Override]
+    public function extract(string $outputDirectory, bool $overwrite = true): void
     {
         $this->adapter->extract($outputDirectory, [$this->getPath()], $overwrite);
     }
 
+    #[Override]
     abstract public function getPath(): string;
 }

@@ -6,28 +6,22 @@ use Dezull\Unarchiver\Adapter\AdapterInterface;
 use Dezull\Unarchiver\Entry\EntryInterface;
 use Exception;
 use Generator;
+use InvalidArgumentException;
 
-class Unarchiver
+final class Unarchiver
 {
-    protected string $filename;
-    protected AdapterInterface $adapter;
-    /** @var string */
-    protected $password;
+    public function __construct(protected string $filename, protected AdapterInterface $adapter, protected ?string $password = null) {}
 
-    public function __construct(string $filename, AdapterInterface $adapter, $password = null) {
-        $this->filename = $filename;
-        $this->password = $password;
-        $this->adapter = $adapter;
-    }
-
-    public static function open($filename, $password = null): Unarchiver {
-        $adapterClass = static::getAdapterFor(static::guessFileType($filename));
+    public static function open(string $filename, ?string $password = null): Unarchiver
+    {
+        $adapterClass = self::getAdapterFor(self::guessFileType($filename));
         $adapter = new $adapterClass($filename, $password);
 
-        return new static($filename, $adapter, $password); 
+        return new self($filename, $adapter, $password);
     }
 
-    protected static function guessFileType($filename): ?string {
+    protected static function guessFileType(string $filename): ?string
+    {
         $parts = explode('.', $filename);
         $ext = $parts[array_key_last($parts)];
 
@@ -38,18 +32,24 @@ class Unarchiver
         }
     }
 
-    protected static function getAdapterFor($type): string {
+    protected static function getAdapterFor(?string $type = null): string
+    {
         switch ($type) {
-        case 'rar': return 'Dezull\Unarchiver\Adapter\Unrar';
-        default: return 'Dezull\Unarchiver\Adapter\Bsdtar';
+            case 'rar': return 'Dezull\Unarchiver\Adapter\Unrar';
+            default: return 'Dezull\Unarchiver\Adapter\Bsdtar';
         }
     }
 
-    public function getEntries(): Generator {
+    /**
+     * @return Generator<EntryInterface>
+     */
+    public function getEntries(): Generator
+    {
         return $this->adapter->getEntries();
     }
 
-    public function getEntry(string $filename): EntryInterface {
+    public function getEntry(string $filename): ?EntryInterface
+    {
         return $this->adapter->getEntry($filename);
     }
 
@@ -61,8 +61,11 @@ class Unarchiver
      *
      * FIXME bsdtar and unrar use pattern, not exact match, so the output could be wrong,
      *       if $filenames are specified.
+     *
+     * @param  string[]  $filenames
      */
-    public function extract($outputDirectory, $filenames = null, $overwrite = true): int {
+    public function extract(string $outputDirectory, ?array $filenames = null, bool $overwrite = true): int
+    {
         try {
             return $this->adapter->extract($outputDirectory, $filenames, $overwrite);
         } catch (Exception $e) {
@@ -72,10 +75,19 @@ class Unarchiver
         }
     }
 
-    public function setTimeout(?int $seconds = null): static
+    public function setTimeout(int $seconds): static
     {
-        $this->adapter->setTimeout($seconds);
+        $this->adapter->setTimeout($this->validateTimeout($seconds));
 
         return $this;
+    }
+
+    private function validateTimeout(int $seconds): int
+    {
+        if ($seconds <= 0) {
+            throw new InvalidArgumentException('timeout must be > 0');
+        }
+
+        return $seconds;
     }
 }
