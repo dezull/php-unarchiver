@@ -5,20 +5,21 @@ namespace Tests;
 use DateTime;
 use Dezull\Unarchiver\Unarchiver;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\TestWith;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 
 #[CoversNothing]
 class UnarchiverTest extends TestCase
 {
-    public function test_open_file_with_correct_adapter(): void
+    #[TestWith(['multi.zip', 'Bsdtar'], 'Bsdtar')]
+    #[TestWith(['multi.rar', 'Unrar'], 'Unrar')]
+    #[TestWith(['multi.7z', 'SevenZip'], 'SevenZip')]
+    public function test_open_file_with_correct_adapter(string $fixture, string $adapter): void
     {
-        $zipEntries = Unarchiver::open($this->fixturePath('dir.zip'))->getEntries();
+        $ua = Unarchiver::open($this->fixturePath($fixture));
 
-        $this->assertSame(2, iterator_count($zipEntries));
-
-        $rarEntries = Unarchiver::open($this->fixturePath('dir.rar'))->getEntries();
-
-        $this->assertSame(2, iterator_count($rarEntries));
+        $this->assertSame(3, iterator_count($ua->getEntries()));
+        $this->assertSame($adapter, $ua->getAdapter());
     }
 
     public function test_unsupported_file_has_no_entry(): void

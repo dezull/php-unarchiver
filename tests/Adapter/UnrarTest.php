@@ -16,18 +16,18 @@ class UnrarTest extends TestCase
 {
     public function test_get_entries_for_invalid_file(): void
     {
-        $tar = new Unrar(__FILE__);
+        $unrar = new Unrar(__FILE__);
 
-        $entries = iterator_to_array($tar->getEntries());
+        $entries = iterator_to_array($unrar->getEntries());
 
         $this->assertCount(0, $entries);
     }
 
     public function test_get_entries_with_archive_with_no_password(): void
     {
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
 
-        $entries = iterator_to_array($tar->getEntries());
+        $entries = iterator_to_array($unrar->getEntries());
 
         $this->assertCount(3, $entries);
 
@@ -56,9 +56,9 @@ class UnrarTest extends TestCase
     #[TestWith([null, 'multi-password.rar'], 'no password')]
     public function test_get_entries_for_encrypted_archive(?string $password, string $archiveFile): void
     {
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $entries = iterator_to_array($tar->getEntries());
+        $entries = iterator_to_array($unrar->getEntries());
 
         $this->assertCount(3, $entries);
 
@@ -83,9 +83,9 @@ class UnrarTest extends TestCase
 
     public function test_get_entries_for_header_encrypted_archive_with_valid_password(): void
     {
-        $tar = new Unrar($this->fixturePath('multi-password-header.rar'), 'verysecure');
+        $unrar = new Unrar($this->fixturePath('multi-password-header.rar'), 'verysecure');
 
-        $entries = iterator_to_array($tar->getEntries());
+        $entries = iterator_to_array($unrar->getEntries());
 
         $this->assertCount(3, $entries);
 
@@ -114,23 +114,23 @@ class UnrarTest extends TestCase
     public function test_get_entries_for_header_encrypted_archive(?string $password, string $archiveFile): void
     {
         $this->expectException(EncryptionPasswordRequiredException::class);
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $entries = iterator_to_array($tar->getEntries());
+        $entries = iterator_to_array($unrar->getEntries());
     }
 
     public function test_get_entry_for_invalid_file(): void
     {
-        $tar = new Unrar(__FILE__);
+        $unrar = new Unrar(__FILE__);
 
-        $this->assertNull($tar->getEntry('hello/world.txt'));
+        $this->assertNull($unrar->getEntry('hello/world.txt'));
     }
 
     public function test_get_entry_with_archive_with_no_password(): void
     {
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
 
-        $entry = $tar->getEntry('multi/first.txt');
+        $entry = $unrar->getEntry('multi/first.txt');
 
         $this->assertNotNull($entry);
         $this->assertFalse($entry->isDirectory());
@@ -149,9 +149,9 @@ class UnrarTest extends TestCase
     #[TestWith([null, 'multi-password.rar'], 'encrypted archive with no password')]
     public function test_get_entry_for_encrypted_archive(?string $password, string $archiveFile): void
     {
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $entry = $tar->getEntry('multi/first.txt');
+        $entry = $unrar->getEntry('multi/first.txt');
 
         $this->assertNotNull($entry);
         $this->assertFalse($entry->isDirectory());
@@ -166,9 +166,9 @@ class UnrarTest extends TestCase
 
     public function test_get_entry_for_header_encrypted_archive_with_valid_password(): void
     {
-        $tar = new Unrar($this->fixturePath('multi-password-header.rar'), 'verysecure');
+        $unrar = new Unrar($this->fixturePath('multi-password-header.rar'), 'verysecure');
 
-        $entry = $tar->getEntry('multi/first.txt');
+        $entry = $unrar->getEntry('multi/first.txt');
 
         $this->assertNotNull($entry);
         $this->assertFalse($entry->isDirectory());
@@ -187,16 +187,16 @@ class UnrarTest extends TestCase
     public function test_get_entry_for_header_encrypted_archive(?string $password, string $archiveFile): void
     {
         $this->expectException(EncryptionPasswordRequiredException::class);
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $tar->getEntry('multi/first.txt');
+        $unrar->getEntry('multi/first.txt');
     }
 
     public function test_get_no_entry(): void
     {
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
 
-        $entry = $tar->getEntry('hello/world.txt');
+        $entry = $unrar->getEntry('hello/world.txt');
 
         $this->assertNull($entry);
     }
@@ -206,9 +206,9 @@ class UnrarTest extends TestCase
     public function test_extract_valid_archive(?string $password, string $archiveFile): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $count = $tar->extract($outDir->path());
+        $count = $unrar->extract($outDir->path());
 
         $this->assertSame(2, $count);
         $this->assertSame("abc\n", @file_get_contents($outDir->path('multi/first.txt')));
@@ -222,17 +222,17 @@ class UnrarTest extends TestCase
         $this->expectException(EncryptionPasswordRequiredException::class);
 
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar($this->fixturePath('multi-password.rar'), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password.rar'), $password);
 
-        $tar->extract($outDir->path());
+        $unrar->extract($outDir->path());
     }
 
     public function test_extract_invalid_archive(): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar(__FILE__);
+        $unrar = new Unrar(__FILE__);
 
-        $count = $tar->extract($outDir->path());
+        $count = $unrar->extract($outDir->path());
 
         $this->assertSame(0, $count);
         $this->assertSame([], glob($outDir->path().'/*'));
@@ -243,9 +243,9 @@ class UnrarTest extends TestCase
     public function test_extract_filenames(?string $password, string $archiveFile): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
 
-        $count = $tar->extract($outDir->path(), ['multi/second.txt']);
+        $count = $unrar->extract($outDir->path(), ['multi/second.txt']);
 
         $this->assertSame(1, $count);
         $this->assertFileDoesNotExist($outDir->path('multi/first.txt'));
@@ -261,19 +261,19 @@ class UnrarTest extends TestCase
         $this->expectException(EncryptionPasswordRequiredException::class);
 
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar($this->fixturePath('multi-password.rar'), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password.rar'), $password);
 
-        $tar->extract($outDir->path(), ['multi/second.txt']);
+        $unrar->extract($outDir->path(), ['multi/second.txt']);
     }
 
     public function test_extract_dont_overwrite(): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
         mkdir($outDir->path('first.txt'));
         file_put_contents($outDir->path('multi/first.txt'), 'dont overwrite');
 
-        $count = $tar->extract($outDir->path(), overwrite: false);
+        $count = $unrar->extract($outDir->path(), overwrite: false);
 
         $this->assertSame(1, $count);
         $this->assertSame('dont overwrite', file_get_contents($outDir->path('multi/first.txt')));
@@ -283,9 +283,9 @@ class UnrarTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
 
-        $entries = $tar->setTimeout(1)->getEntries();
+        $entries = $unrar->setTimeout(1)->getEntries();
 
         iterator_to_array($entries);
     }
@@ -294,9 +294,9 @@ class UnrarTest extends TestCase
     {
         $this->expectException(TimeoutException::class);
 
-        $tar = new Unrar($this->fixturePath('multi.rar'));
+        $unrar = new Unrar($this->fixturePath('multi.rar'));
 
-        $entries = $tar->setTimeout(1)->getEntries();
+        $entries = $unrar->setTimeout(1)->getEntries();
 
         foreach ($entries as $entry) {
             sleep(1);

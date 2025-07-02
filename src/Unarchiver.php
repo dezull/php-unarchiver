@@ -24,18 +24,20 @@ final class Unarchiver
     {
         $parts = explode('.', $filename);
         $ext = $parts[array_key_last($parts)];
+        $mime = mime_content_type($filename);
 
-        if ($ext === 'rar' || mime_content_type($filename) === 'application/x-rar') {
-            return 'rar';
-        } else {
-            return null;
-        }
+        return match (true) {
+            $ext === 'rar' || $mime === 'application/x-rar' => 'rar',
+            $ext === '7z' || $mime === 'application/x-7z-compressed' => '7z',
+            default => null,
+        };
     }
 
     protected static function getAdapterFor(?string $type = null): string
     {
         switch ($type) {
             case 'rar': return 'Dezull\Unarchiver\Adapter\Unrar';
+            case '7z': return 'Dezull\Unarchiver\Adapter\SevenZip';
             default: return 'Dezull\Unarchiver\Adapter\Bsdtar';
         }
     }
@@ -80,6 +82,11 @@ final class Unarchiver
         $this->adapter->setTimeout($this->validateTimeout($seconds));
 
         return $this;
+    }
+
+    public function getAdapter(): string
+    {
+        return preg_replace('/^.+\\\\/', '', $this->adapter::class);
     }
 
     private function validateTimeout(int $seconds): int
