@@ -50,13 +50,13 @@ class UnrarTest extends TestCase
         $this->assertSame('4788814E', $entries[0]->getCrc());
     }
 
-    #[TestWith(['verysecure', 'multi-password.rar'], 'valid password')]
-    #[TestWith(['wrong-password', 'multi-password.rar'], 'invalid password')]
-    #[TestWith(['', 'multi-password.rar'], 'empty password')]
-    #[TestWith([null, 'multi-password.rar'], 'no password')]
-    public function test_get_entries_for_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['verysecure'], 'valid password')]
+    #[TestWith(['wrong-password'], 'invalid password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_get_entries_for_encrypted_archive(?string $password): void
     {
-        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password.rar'), $password);
 
         $entries = iterator_to_array($unrar->getEntries());
 
@@ -108,13 +108,13 @@ class UnrarTest extends TestCase
         $this->assertSame('4788814E', $entries[0]->getCrc());
     }
 
-    #[TestWith(['wrong-password', 'multi-password-header.rar'], 'invalid password')]
-    #[TestWith(['', 'multi-password-header.rar'], 'empty password')]
-    #[TestWith([null, 'multi-password-header.rar'], 'no password')]
-    public function test_get_entries_for_header_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['wrong-password'], 'invalid password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_get_entries_for_header_encrypted_archive(?string $password): void
     {
         $this->expectException(EncryptionPasswordRequiredException::class);
-        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password-header.rar'), $password);
 
         $entries = iterator_to_array($unrar->getEntries());
     }
@@ -143,13 +143,13 @@ class UnrarTest extends TestCase
         $this->assertSame('4788814E', $entry->getCrc());
     }
 
-    #[TestWith(['verysecure', 'multi-password.rar'], 'encrypted archive with valid password')]
-    #[TestWith(['wrong-password', 'multi-password.rar'], 'encrypted archive with invalid password')]
-    #[TestWith([null, 'multi-password.rar'], 'no password')]
-    #[TestWith([null, 'multi-password.rar'], 'encrypted archive with no password')]
-    public function test_get_entry_for_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['verysecure'], 'encrypted archive with valid password')]
+    #[TestWith(['wrong-password'], 'encrypted archive with invalid password')]
+    #[TestWith([null], 'no password')]
+    #[TestWith([null], 'encrypted archive with no password')]
+    public function test_get_entry_for_encrypted_archive(?string $password): void
     {
-        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password.rar'), $password);
 
         $entry = $unrar->getEntry('multi/first.txt');
 
@@ -181,13 +181,13 @@ class UnrarTest extends TestCase
         $this->assertSame('4788814E', $entry->getCrc());
     }
 
-    #[TestWith(['wrong-password', 'multi-password-header.rar'], 'invalid password')]
-    #[TestWith(['', 'multi-password-header.rar'], 'empty password')]
-    #[TestWith([null, 'multi-password-header.rar'], 'no password')]
-    public function test_get_entry_for_header_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['wrong-password'], 'invalid password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_get_entry_for_header_encrypted_archive(?string $password): void
     {
         $this->expectException(EncryptionPasswordRequiredException::class);
-        $unrar = new Unrar($this->fixturePath($archiveFile), $password);
+        $unrar = new Unrar($this->fixturePath('multi-password-header.rar'), $password);
 
         $unrar->getEntry('multi/first.txt');
     }

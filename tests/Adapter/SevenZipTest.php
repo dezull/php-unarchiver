@@ -50,13 +50,13 @@ class SevenZipTest extends TestCase
         $this->assertSame('4788814E', $entries[1]->getCrc());
     }
 
-    #[TestWith(['verysecure', 'multi-password.7z'], 'valid password')]
-    #[TestWith(['wrong-password', 'multi-password.7z'], 'invalid password')]
-    #[TestWith(['', 'multi-password.7z'], 'empty password')]
-    #[TestWith([null, 'multi-password.7z'], 'no password')]
-    public function test_get_entries_for_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['verysecure'], 'valid password')]
+    #[TestWith(['wrong-password'], 'invalid password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_get_entries_for_encrypted_archive(?string $password): void
     {
-        $sevenZ = new SevenZip($this->fixturePath($archiveFile), $password);
+        $sevenZ = new SevenZip($this->fixturePath('multi-password.7z'), $password);
 
         $entries = iterator_to_array($sevenZ->getEntries());
 
@@ -108,13 +108,13 @@ class SevenZipTest extends TestCase
         $this->assertSame('4788814E', $entries[1]->getCrc());
     }
 
-    #[TestWith(['wrong-password', 'multi-password-header.7z'], 'invalid password')]
-    #[TestWith(['', 'multi-password-header.7z'], 'empty password')]
-    #[TestWith([null, 'multi-password-header.7z'], 'no password')]
-    public function test_get_entries_for_header_encrypted_archive(?string $password, string $archiveFile): void
+    #[TestWith(['wrong-password'], 'invalid password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_get_entries_for_header_encrypted_archive(?string $password): void
     {
         $this->expectException(EncryptionPasswordRequiredException::class);
-        $seven7 = new SevenZip($this->fixturePath($archiveFile), $password);
+        $seven7 = new SevenZip($this->fixturePath('multi-password-header.7z'), $password);
 
         $entries = iterator_to_array($seven7->getEntries());
     }
