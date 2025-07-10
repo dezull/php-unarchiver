@@ -13,7 +13,7 @@ Since other libraries already offer archiving and other great features, I decide
 1.  Install dependencies (eg: Ubuntu):
 
 ```bash
-sudo apt install libarchive-tools p7zip-full rar
+sudo apt install libarchive-tools p7zip-full unrar
 ```
 
 2.  Install the package via Composer:
