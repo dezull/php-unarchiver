@@ -36,7 +36,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(0, $entries[0]->getSize());
         $this->assertSame(0, $entries[0]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:09'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:09'),
             $entries[0]->getModificationTime());
         $this->assertNull($entries[0]->getCrc());
 
@@ -45,7 +45,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(4, $entries[1]->getSize());
         $this->assertSame(12, $entries[1]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:03'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:03'),
             $entries[1]->getModificationTime());
         $this->assertSame('4788814E', $entries[1]->getCrc());
     }
@@ -67,7 +67,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(0, $entries[0]->getSize());
         $this->assertSame(0, $entries[0]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:09'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:09'),
             $entries[0]->getModificationTime());
         $this->assertNull($entries[0]->getCrc());
 
@@ -76,7 +76,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(4, $entries[1]->getSize());
         $this->assertSame(16, $entries[1]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:03'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:03'),
             $entries[1]->getModificationTime());
         $this->assertSame('4788814E', $entries[1]->getCrc());
     }
@@ -94,7 +94,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(0, $entries[0]->getSize());
         $this->assertSame(0, $entries[0]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:09'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:09'),
             $entries[0]->getModificationTime());
         $this->assertNull($entries[0]->getCrc());
 
@@ -103,7 +103,7 @@ class SevenZipTest extends TestCase
         $this->assertSame(4, $entries[1]->getSize());
         $this->assertSame(16, $entries[1]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:03'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:03'),
             $entries[1]->getModificationTime());
         $this->assertSame('4788814E', $entries[1]->getCrc());
     }
