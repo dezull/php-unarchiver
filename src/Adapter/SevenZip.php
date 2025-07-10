@@ -134,10 +134,10 @@ class SevenZip extends ExecutableAdapter
         } elseif (preg_match('/^Size = (?P<size>.+)$/', $line, $matches) === 1) {
             $this->currentEntry->setSize(intval($matches['size']));
         } elseif (preg_match('/^Modified = (?P<mtime>.+)$/', $line, $matches) === 1) {
-            $date = DateTime::createFromFormat('Y-m-d G:i:s', $matches['mtime']);
-
-            $this->currentEntry->setModificationTime($date);
-        } elseif (preg_match('/^Attributes = (?P<type>.)_ .+$/', $line, $matches) === 1) {
+            if ($date = DateTime::createFromFormat('Y-m-d G:i:s+', $matches['mtime'])) {
+                $this->currentEntry->setModificationTime($date);
+            }
+        } elseif (preg_match('/^Attributes = (?P<type>.).+$/', $line, $matches) === 1) {
             $this->currentEntry->setDirectory($matches['type'] === 'D');
         } elseif (preg_match('/^CRC = (?P<crc>.+)$/', $line, $matches) === 1) {
             $this->currentEntry->setCrc($matches['crc']);

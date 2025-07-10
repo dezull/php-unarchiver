@@ -177,7 +177,9 @@ class Unrar extends ExecutableAdapter
         } elseif (preg_match('/^\s*Size: (?P<size>.+)$/', $line, $matches) === 1) {
             $this->currentEntry->setSize(intval($matches['size']));
         } elseif (preg_match('/^\s*mtime: (?P<mtime>.+),.+$/', $line, $matches) === 1) {
-            $this->currentEntry->setModificationTime(strtotime($matches['mtime']));
+            if ($time = strtotime($matches['mtime'])) {
+                $this->currentEntry->setModificationTime($time);
+            }
         } elseif (preg_match('/^\s*CRC32: (?P<crc>.+)$/', $line, $matches) === 1) {
             $this->currentEntry->setCrc($matches['crc']);
         } elseif (preg_match('/^\s*Compression: RAR.+$/', $line, $matches) === 1) {

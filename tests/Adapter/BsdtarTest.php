@@ -32,7 +32,7 @@ class BsdtarTest extends TestCase
         $this->assertSame(0, $entries[0]->getSize());
         $this->assertNull($entries[0]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:00'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:00'),
             $entries[0]->getModificationTime());
         $this->assertNull($entries[0]->getCrc());
 
@@ -41,7 +41,7 @@ class BsdtarTest extends TestCase
         $this->assertSame(4, $entries[1]->getSize());
         $this->assertNull($entries[1]->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:00'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:00'),
             $entries[1]->getModificationTime());
         $this->assertNull($entries[1]->getCrc());
     }
@@ -79,7 +79,7 @@ class BsdtarTest extends TestCase
         $this->assertSame(4, $entry->getSize());
         $this->assertNull($entry->getPackedSize());
         $this->assertEquals(
-            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-16 07:04:00'),
+            DateTime::createFromFormat('Y-m-d G:i:s', '2025-05-15 23:04:00'),
             $entry->getModificationTime());
         $this->assertNull($entry->getCrc());
     }
