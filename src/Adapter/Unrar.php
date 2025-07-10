@@ -19,6 +19,7 @@ class Unrar extends ExecutableAdapter
     {
         $this->setExecutable(
             '/usr/local/bin/unrar',
+            '/usr/bin/unrar-nonfree',
             '/usr/bin/unrar'
         );
     }
