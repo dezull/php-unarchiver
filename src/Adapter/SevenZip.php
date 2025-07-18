@@ -158,7 +158,7 @@ class SevenZip extends ExecutableAdapter
 
     protected function ensurePassword(string $buffer): void
     {
-        if (preg_match('/^ERROR: .+ Wrong password?/m', $buffer) === 1) {
+        if (preg_match('/^(ERROR: .+ Wrong password\?)|(Can ?not open encrypted archive\. Wrong password\?)/m', $buffer) === 1) {
             throw new EncryptionPasswordRequiredException;
         }
     }

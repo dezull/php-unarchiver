@@ -228,6 +228,19 @@ class UnrarTest extends TestCase
         $unrar->extract($outDir->path());
     }
 
+    #[TestWith(['wrong-password'], 'wrong password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_extract_header_encrypted_archive_with_invalid_password(?string $password): void
+    {
+        $this->expectException(EncryptionPasswordRequiredException::class);
+
+        $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
+        $unrar = new Unrar($this->fixturePath('multi-password-header.rar'), $password);
+
+        $unrar->extract($outDir->path());
+    }
+
     public function test_extract_invalid_archive(): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();

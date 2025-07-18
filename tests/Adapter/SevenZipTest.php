@@ -225,6 +225,19 @@ class SevenZipTest extends TestCase
         $sevenZ->extract($outDir->path());
     }
 
+    #[TestWith(['wrong-password'], 'wrong password')]
+    #[TestWith([''], 'empty password')]
+    #[TestWith([null], 'no password')]
+    public function test_extract_header_encrypted_archive_with_invalid_password(?string $password): void
+    {
+        $this->expectException(EncryptionPasswordRequiredException::class);
+
+        $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
+        $sevenZ = new SevenZip($this->fixturePath('multi-password-header.7z'), $password);
+
+        $sevenZ->extract($outDir->path());
+    }
+
     public function test_extract_invalid_archive(): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
