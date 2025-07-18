@@ -30,11 +30,16 @@ class SevenZip extends ExecutableAdapter
         yield from $this->getParsedEntries();
     }
 
-    public function getEntry(string $filename): ?EntryInterface {}
+    #[Override]
+    public function getEntry(string $filename): ?EntryInterface
+    {
+        return $this->getParsedEntries($filename)->current();
+    }
 
     /**
      * @return int files extracted. 7z always includes parent folders, even when $overwrite is true.
      */
+    #[Override]
     public function extract(string $outputDirectory, ?array $filenames = null, bool $overwrite = true): int
     {
         return $this->extractAndCount($outputDirectory, $filenames, $overwrite);

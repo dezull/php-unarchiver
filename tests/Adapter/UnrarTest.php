@@ -203,6 +203,7 @@ class UnrarTest extends TestCase
 
     #[TestWith([null, 'multi.rar'], 'archive has no password')]
     #[TestWith(['verysecure', 'multi-password.rar'], 'encrypted archive with valid password')]
+    #[TestWith(['verysecure', 'multi-password-header.rar'], 'header encrypted archive with valid password')]
     public function test_extract_valid_archive(?string $password, string $archiveFile): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
@@ -240,6 +241,7 @@ class UnrarTest extends TestCase
 
     #[TestWith([null, 'multi.rar'], 'archive has no password')]
     #[TestWith(['verysecure', 'multi-password.rar'], 'encrypted archive with valid password')]
+    #[TestWith(['verysecure', 'multi-password-header.rar'], 'header encrypted archive with valid password')]
     public function test_extract_filenames(?string $password, string $archiveFile): void
     {
         $outDir = (new TemporaryDirectory)->deleteWhenDestroyed()->create();
