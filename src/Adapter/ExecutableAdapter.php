@@ -27,7 +27,7 @@ abstract class ExecutableAdapter implements AdapterInterface
     public function cleanUp(): void
     {
         if (isset($this->process)) {
-            $this->process->end();
+            $this->process->end(true);
         }
     }
 

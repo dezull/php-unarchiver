@@ -53,7 +53,7 @@ class Process implements IteratorAggregate
         return $this->started;
     }
 
-    public function end(): static
+    public function end(bool $force = false): static
     {
         if (! $this->started) {
             throw new RuntimeException('Process not yet started');
@@ -62,6 +62,9 @@ class Process implements IteratorAggregate
         if (! $this->ended) {
             $this->input->close();
             try {
+                if ($this->process->isRunning() && $force) {
+                    $this->process->signal(SIGTERM);
+                }
                 $this->process->wait();
             } catch (ProcessTimedOutException $e) {
                 throw new TimeoutException(previous: $e);
