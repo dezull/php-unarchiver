@@ -6,6 +6,8 @@ use Dezull\Unarchiver\Exception\TimeoutException;
 use IteratorAggregate;
 use LogicException;
 use RuntimeException;
+use Symfony\Component\Process\Exception\LogicException as SymfonyLogicException;
+use Symfony\Component\Process\Exception\ProcessSignaledException;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Process as SymfonyProcess;
@@ -66,6 +68,7 @@ class Process implements IteratorAggregate
                     $this->process->signal(SIGTERM);
                 }
                 $this->process->wait();
+            } catch (SymfonyLogicException|ProcessSignaledException $e) {
             } catch (ProcessTimedOutException $e) {
                 throw new TimeoutException(previous: $e);
             }
