@@ -120,11 +120,12 @@ class Bsdtar extends ExecutableAdapter
     protected function createBuffer(Process $process): LineBufferedOutput
     {
         return (new LineBufferedOutput($process))
-            ->beforeBuffer(function ($output, $fd) {
+            ->applyBefore(function ($output, $fd) {
                 if ($fd === Process::ERR) {
                     $this->ensurePassword($output);
                 }
-            });
+            })
+            ->applyAfter(fn ($output, $fd) => $this->ensurePassword($output));
     }
 
     /**

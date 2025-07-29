@@ -12,7 +12,9 @@ use Traversable;
  */
 class LineBufferedOutput implements IteratorAggregate
 {
-    protected ?Closure $beforeBuffer = null;
+    protected ?Closure $applyBefore = null;
+
+    protected ?Closure $applyAfter = null;
 
     protected array $unterminated = [];
 
@@ -28,9 +30,16 @@ class LineBufferedOutput implements IteratorAggregate
     /**
      * @param  Closure(int|string, string): mixed  $callback
      */
-    public function beforeBuffer(Closure $callback): LineBufferedOutput
+    public function applyBefore(Closure $callback): LineBufferedOutput
     {
-        $this->beforeBuffer = $callback;
+        $this->applyBefore = $callback;
+
+        return $this;
+    }
+
+    public function applyAfter(Closure $callback): LineBufferedOutput
+    {
+        $this->applyAfter = $callback;
 
         return $this;
     }
@@ -47,9 +56,10 @@ class LineBufferedOutput implements IteratorAggregate
         $this->started = true;
 
         foreach ($this->rawOutput as $key => $output) {
-            $this->applyBeforeBuffer($output, $key);
+            $this->applyCallback('applyBefore', $output, $key);
 
             foreach ($this->merge($output, $key) as $line) {
+                $this->applyCallback('applyAfter', $line, $key);
                 $this->mergeBuffer ? yield $line : yield $key => $line;
             }
         }
@@ -72,10 +82,10 @@ class LineBufferedOutput implements IteratorAggregate
         return $arr;
     }
 
-    protected function applyBeforeBuffer(string $output, string $key): void
+    protected function applyCallback(string $callback, string $output, string $key): void
     {
-        if (isset($this->beforeBuffer)) {
-            ($this->beforeBuffer)($output, $key);
+        if (isset($this->{$callback})) {
+            ($this->{$callback})($output, $key);
         }
     }
 
@@ -86,6 +96,7 @@ class LineBufferedOutput implements IteratorAggregate
     {
         foreach (array_keys($this->unterminated) as $key) {
             if (! is_null($line = $this->pop($key))) {
+                $this->applyCallback('applyAfter', $line, $key);
                 $this->mergeBuffer ? yield $line : yield $key => $line;
             }
         }
