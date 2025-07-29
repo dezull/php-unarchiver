@@ -113,9 +113,8 @@ class SevenZip extends ExecutableAdapter
     protected function createBuffer(Process $process): LineBufferedOutput
     {
         return (new LineBufferedOutput($process))
-            ->beforeBuffer(function ($output, $fd) {
-                $this->ensurePassword($output);
-            });
+            ->applyBefore(fn ($output, $fd) => $this->ensurePassword($output))
+            ->applyAfter(fn ($output, $fd) => $this->ensurePassword($output));
     }
 
     protected function parseEntryFromLine(string $line): ?Entry

@@ -96,7 +96,7 @@ class LineBufferedOutputTest extends TestCase
 
     #[TestWith([true], 'merged buffer')]
     #[TestWith([false], 'unmerged buffers')]
-    public function test_apply_before_buffer(bool $mergeBuffer): void
+    public function test_apply_before(bool $mergeBuffer): void
     {
         $iterator = $this->makeIterateable([
             ['foo' => "hello\n"],
@@ -107,7 +107,7 @@ class LineBufferedOutputTest extends TestCase
         $buffer = new LineBufferedOutput($iterator, mergeBuffer: $mergeBuffer);
         $all = [];
 
-        $buffer->beforeBuffer(function ($v, $k) use (&$all) {
+        $buffer->applyBefore(function ($v, $k) use (&$all) {
             $all[] = [$k, $v];
         });
         $buffer->toArray();
@@ -118,6 +118,57 @@ class LineBufferedOutputTest extends TestCase
                 ['bar', 'hi'],
                 ['bar', ' all'],
                 ['foo', ' world'],
+            ],
+            $all
+        );
+    }
+
+    public function test_apply_after_with_unmerged_buffer(): void
+    {
+        $iterator = $this->makeIterateable([
+            ['foo' => "hello\n"],
+            ['bar' => 'hi'],
+            ['bar' => ' all'],
+            ['foo' => ' world'],
+        ]);
+        $buffer = new LineBufferedOutput($iterator, mergeBuffer: false);
+        $all = [];
+
+        $buffer->applyAfter(function ($v, $k) use (&$all) {
+            $all[] = [$k, $v];
+        });
+        $buffer->toArray();
+
+        $this->assertSame(
+            [
+                ['foo', 'hello'],
+                ['foo', ' world'],
+                ['bar', 'hi all'],
+            ],
+            $all
+        );
+    }
+
+    public function test_apply_after_with_merged_buffer(): void
+    {
+        $iterator = $this->makeIterateable([
+            ['foo' => "hello\n"],
+            ['bar' => 'hi'],
+            ['bar' => ' all'],
+            ['foo' => ' world'],
+        ]);
+        $buffer = new LineBufferedOutput($iterator, mergeBuffer: true);
+        $all = [];
+
+        $buffer->applyAfter(function ($v, $k) use (&$all) {
+            $all[] = [$k, $v];
+        });
+        $buffer->toArray();
+
+        $this->assertSame(
+            [
+                ['foo', 'hello'],
+                ['', 'hi all world'],
             ],
             $all
         );
